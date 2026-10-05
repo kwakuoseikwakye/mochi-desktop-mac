@@ -1,0 +1,8 @@
+.build/
+build/
+dist/
+state/
+.DS_Store
+*.swp
+*~
+.swiftpm/

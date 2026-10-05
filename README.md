@@ -1,6 +1,26 @@
-# Mochi for Mac 🍵
+<div align="center">
 
-> A desktop companion that keeps you company while you code. You never code alone again.
+# mochi for Mac 🌱
+
+### A tiny desktop buddy that keeps you company while you code.
+
+<img width="256" height="256" alt="Mochi" src="https://github.com/user-attachments/assets/f8565ca9-7ea8-4613-9591-a0c0f0e368d3" />
+
+**You never code alone again.**
+
+[Install](#installation) · [Controls](#controls) · [Features](#features) · [Building](#build-from-source-apple-silicon--intel) · [Credit](#credit--attribution) · [Releases](https://github.com/kwakuoseikwakye/mochi-desktop-mac/releases)
+
+<br>
+
+![macOS 13+](https://img.shields.io/badge/macOS-13%2B-000000?logo=apple&logoColor=white)
+![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-FA7343?logo=swift&logoColor=white)
+![AppKit](https://img.shields.io/badge/AppKit-Native-007AFF?logo=apple&logoColor=white)
+![License MIT](https://img.shields.io/badge/License-MIT-7FE719.svg)
+[![Release](https://img.shields.io/github/v/release/kwakuoseikwakye/mochi-desktop-mac?color=7FE719)](https://github.com/kwakuoseikwakye/mochi-desktop-mac/releases)
+
+</div>
+
+---
 
 Mochi is a lightweight desktop companion for macOS. A small green character that idles, looks around, dozes off, and hangs out on your screen while you work.
 
@@ -16,6 +36,32 @@ This is an unofficial native macOS port of [miflow13/mochi-desktop](https://gith
 - **Focus Sessions:** Start a 25-minute focus session from the menu. Mochi stays calm and quiet beside you, with a heart reward when your session finishes.
 - **Roaming:** Mochi occasionally takes a short walk along the bottom of your screen, pausing immediately if you type, click, drag, or start a focus session.
 - **Menu Bar Companion:** A 🌱 menu-bar icon lets you bring Mochi to your active screen or quit anytime.
+
+---
+
+### Share a snack
+
+<p align="center">
+  <img src="docs/media/mochi-feed.gif" width="700" alt="Feeding Mochi from the desktop">
+</p>
+
+The right-click menu includes **Feed**. Mochi plays an authored eating animation and responds with a little heart.
+
+### Work beside each other
+
+<p align="center">
+  <img src="docs/media/mochi-focus.gif" width="700" alt="Mochi focusing beside the user">
+</p>
+
+**Focus with Mochi** starts a 25-minute Pomodoro focus block. Mochi stays calm and quiet on your screen while you work, celebrating with a heart at the end.
+
+### Terminal & Code Editor Awareness
+
+<p align="center">
+  <img src="docs/media/mochi-terminal.gif" width="700" alt="Mochi working beside terminal">
+</p>
+
+Mochi notices when you switch to your code editor or terminal, and dozes off after 5 minutes of inactivity, waking up when you return.
 
 ---
 

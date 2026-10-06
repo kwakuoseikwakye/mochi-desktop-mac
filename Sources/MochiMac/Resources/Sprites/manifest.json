@@ -230,6 +230,335 @@
       "frame_count": 8,
       "fps": 7,
       "loop": true
+    },
+    "this_is_fine": {
+      "frames": [
+        "this_is_fine/this_is_fine_01.png",
+        "this_is_fine/this_is_fine_02.png",
+        "this_is_fine/this_is_fine_03.png",
+        "this_is_fine/this_is_fine_04.png",
+        "this_is_fine/this_is_fine_05.png",
+        "this_is_fine/this_is_fine_06.png",
+        "this_is_fine/this_is_fine_07.png",
+        "this_is_fine/this_is_fine_08.png",
+        "this_is_fine/this_is_fine_09.png",
+        "this_is_fine/this_is_fine_10.png",
+        "this_is_fine/this_is_fine_11.png",
+        "this_is_fine/this_is_fine_12.png",
+        "this_is_fine/this_is_fine_13.png",
+        "this_is_fine/this_is_fine_14.png",
+        "this_is_fine/this_is_fine_15.png",
+        "this_is_fine/this_is_fine_16.png"
+      ],
+      "frame_count": 16,
+      "fps": 10.0,
+      "loop": true
+    },
+    "table_flip": {
+      "frames": [
+        "table_flip/table_flip_01.png",
+        "table_flip/table_flip_02.png",
+        "table_flip/table_flip_03.png",
+        "table_flip/table_flip_04.png",
+        "table_flip/table_flip_05.png",
+        "table_flip/table_flip_06.png",
+        "table_flip/table_flip_07.png",
+        "table_flip/table_flip_08.png",
+        "table_flip/table_flip_09.png",
+        "table_flip/table_flip_10.png",
+        "table_flip/table_flip_11.png",
+        "table_flip/table_flip_12.png",
+        "table_flip/table_flip_13.png",
+        "table_flip/table_flip_14.png",
+        "table_flip/table_flip_15.png",
+        "table_flip/table_flip_16.png"
+      ],
+      "frame_count": 16,
+      "fps": 10.0,
+      "loop": false
+    },
+    "coffee": {
+      "frames": [
+        "coffee/coffee_01.png",
+        "coffee/coffee_02.png",
+        "coffee/coffee_03.png",
+        "coffee/coffee_04.png",
+        "coffee/coffee_05.png",
+        "coffee/coffee_06.png",
+        "coffee/coffee_07.png",
+        "coffee/coffee_08.png",
+        "coffee/coffee_09.png",
+        "coffee/coffee_10.png",
+        "coffee/coffee_11.png",
+        "coffee/coffee_12.png",
+        "coffee/coffee_13.png",
+        "coffee/coffee_14.png",
+        "coffee/coffee_15.png",
+        "coffee/coffee_16.png",
+        "coffee/coffee_17.png",
+        "coffee/coffee_18.png",
+        "coffee/coffee_19.png",
+        "coffee/coffee_20.png",
+        "coffee/coffee_21.png"
+      ],
+      "frame_count": 21,
+      "fps": 10.0,
+      "loop": true
+    },
+    "dance": {
+      "frames": [
+        "dance/dance_01.png",
+        "dance/dance_02.png",
+        "dance/dance_03.png",
+        "dance/dance_04.png",
+        "dance/dance_05.png",
+        "dance/dance_06.png",
+        "dance/dance_07.png",
+        "dance/dance_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "party": {
+      "frames": [
+        "party/party_01.png",
+        "party/party_02.png",
+        "party/party_03.png",
+        "party/party_04.png",
+        "party/party_05.png",
+        "party/party_06.png",
+        "party/party_07.png",
+        "party/party_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "popcorn": {
+      "frames": [
+        "popcorn/popcorn_01.png",
+        "popcorn/popcorn_02.png",
+        "popcorn/popcorn_03.png",
+        "popcorn/popcorn_04.png",
+        "popcorn/popcorn_05.png",
+        "popcorn/popcorn_06.png",
+        "popcorn/popcorn_07.png",
+        "popcorn/popcorn_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "rage": {
+      "frames": [
+        "rage/rage_01.png",
+        "rage/rage_02.png",
+        "rage/rage_03.png",
+        "rage/rage_04.png",
+        "rage/rage_05.png",
+        "rage/rage_06.png",
+        "rage/rage_07.png",
+        "rage/rage_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "crying": {
+      "frames": [
+        "crying/crying_01.png",
+        "crying/crying_02.png",
+        "crying/crying_03.png",
+        "crying/crying_04.png",
+        "crying/crying_05.png",
+        "crying/crying_06.png"
+      ],
+      "frame_count": 6,
+      "fps": 10.0,
+      "loop": true
+    },
+    "sparkle": {
+      "frames": [
+        "sparkle/sparkle_01.png",
+        "sparkle/sparkle_02.png",
+        "sparkle/sparkle_03.png",
+        "sparkle/sparkle_04.png",
+        "sparkle/sparkle_05.png",
+        "sparkle/sparkle_06.png",
+        "sparkle/sparkle_07.png",
+        "sparkle/sparkle_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "salute": {
+      "frames": [
+        "salute/salute_01.png",
+        "salute/salute_02.png",
+        "salute/salute_03.png",
+        "salute/salute_04.png",
+        "salute/salute_05.png",
+        "salute/salute_06.png"
+      ],
+      "frame_count": 6,
+      "fps": 10.0,
+      "loop": false
+    },
+    "shrug": {
+      "frames": [
+        "shrug/shrug_01.png",
+        "shrug/shrug_02.png",
+        "shrug/shrug_03.png",
+        "shrug/shrug_04.png",
+        "shrug/shrug_05.png",
+        "shrug/shrug_06.png"
+      ],
+      "frame_count": 6,
+      "fps": 10.0,
+      "loop": false
+    },
+    "headpat": {
+      "frames": [
+        "headpat/headpat_01.png",
+        "headpat/headpat_02.png",
+        "headpat/headpat_03.png",
+        "headpat/headpat_04.png",
+        "headpat/headpat_05.png",
+        "headpat/headpat_06.png",
+        "headpat/headpat_07.png",
+        "headpat/headpat_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "terminal": {
+      "frames": [
+        "terminal/terminal_01.png",
+        "terminal/terminal_02.png",
+        "terminal/terminal_03.png",
+        "terminal/terminal_04.png",
+        "terminal/terminal_05.png",
+        "terminal/terminal_06.png",
+        "terminal/terminal_07.png",
+        "terminal/terminal_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": false
+    },
+    "typing": {
+      "frames": [
+        "typing/typing_01.png",
+        "typing/typing_02.png",
+        "typing/typing_03.png",
+        "typing/typing_04.png",
+        "typing/typing_05.png",
+        "typing/typing_06.png",
+        "typing/typing_07.png",
+        "typing/typing_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "vs_code": {
+      "frames": [
+        "vs_code/vs_code_01.png",
+        "vs_code/vs_code_02.png",
+        "vs_code/vs_code_03.png",
+        "vs_code/vs_code_04.png",
+        "vs_code/vs_code_05.png",
+        "vs_code/vs_code_06.png",
+        "vs_code/vs_code_07.png",
+        "vs_code/vs_code_08.png",
+        "vs_code/vs_code_09.png",
+        "vs_code/vs_code_10.png",
+        "vs_code/vs_code_11.png",
+        "vs_code/vs_code_12.png",
+        "vs_code/vs_code_13.png",
+        "vs_code/vs_code_14.png"
+      ],
+      "frame_count": 14,
+      "fps": 10.0,
+      "loop": false
+    },
+    "watch": {
+      "frames": [
+        "watch/watch_01.png",
+        "watch/watch_02.png",
+        "watch/watch_03.png",
+        "watch/watch_04.png",
+        "watch/watch_05.png",
+        "watch/watch_06.png",
+        "watch/watch_07.png",
+        "watch/watch_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "dizzy": {
+      "frames": [
+        "dizzy/dizzy_01.png",
+        "dizzy/dizzy_02.png",
+        "dizzy/dizzy_03.png",
+        "dizzy/dizzy_04.png",
+        "dizzy/dizzy_05.png",
+        "dizzy/dizzy_06.png",
+        "dizzy/dizzy_07.png",
+        "dizzy/dizzy_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": true
+    },
+    "explode": {
+      "frames": [
+        "explode/explode_01.png",
+        "explode/explode_02.png",
+        "explode/explode_03.png",
+        "explode/explode_04.png",
+        "explode/explode_05.png",
+        "explode/explode_06.png",
+        "explode/explode_07.png",
+        "explode/explode_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": false
+    },
+    "firework": {
+      "frames": [
+        "firework/firework_01.png",
+        "firework/firework_02.png",
+        "firework/firework_03.png",
+        "firework/firework_04.png",
+        "firework/firework_05.png",
+        "firework/firework_06.png",
+        "firework/firework_07.png",
+        "firework/firework_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": false
+    },
+    "wave": {
+      "frames": [
+        "wave/wave_01.png",
+        "wave/wave_02.png",
+        "wave/wave_03.png",
+        "wave/wave_04.png",
+        "wave/wave_05.png",
+        "wave/wave_06.png",
+        "wave/wave_07.png",
+        "wave/wave_08.png"
+      ],
+      "frame_count": 8,
+      "fps": 10.0,
+      "loop": false
     }
   }
 }

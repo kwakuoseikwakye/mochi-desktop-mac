@@ -57,6 +57,7 @@ final class PetController: NSObject {
     private let manifest: Manifest
     private var images: [String: NSImage] = [:]
     private var companion = Companion()
+    private var cataloguePanel: EmoteCataloguePanel?
     private var timer: Timer?
     private var previousTick = ProcessInfo.processInfo.systemUptime
     private var nextAmbient = ProcessInfo.processInfo.systemUptime + 5
@@ -78,6 +79,7 @@ final class PetController: NSObject {
         let resources = Bundle.module.resourceURL!.appendingPathComponent("Resources")
         let root = resources.appendingPathComponent("Sprites")
         manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: root.appendingPathComponent("manifest.json"))).validated()
+        companion = Companion(manifest: manifest)
         for clip in manifest.animations.values {
             for frame in clip.frames where images[frame] == nil {
                 guard let image = NSImage(contentsOf: root.appendingPathComponent(frame)) else {
@@ -128,6 +130,8 @@ final class PetController: NSObject {
         timer?.invalidate()
         timer = nil
         NotificationCenter.default.removeObserver(self)
+        cataloguePanel?.close()
+        cataloguePanel = nil
         save()
         panel.close()
     }
@@ -137,7 +141,7 @@ final class PetController: NSObject {
         // Avoid replaying minutes of animation after system sleep or a blocked menu.
         let delta = min(max(now - previousTick, 0), 0.25)
         previousTick = now
-        companion.advance(seconds: delta, clips: manifest.animations)
+        companion.tick(now: now, elapsed: delta)
         if now >= nextAmbient {
             if companion.animation == "idle", !focus.isActive { companion.react(Bool.random() ? "blink" : "look") }
             nextAmbient = now + Double.random(in: 5...12)
@@ -209,6 +213,32 @@ final class PetController: NSObject {
     func beginDrag() { companion.beginDrag(); render() }
     func endDrag() { companion.endDrag(); save(); render() }
 
+    func playEmote(_ emote: Emote) {
+        let wasSleeping = companion.sleeping
+        companion.playEmote(emote, now: ProcessInfo.processInfo.systemUptime)
+        if wasSleeping { save() }
+        render()
+    }
+
+    @objc func showEmoteCatalogue() {
+        if cataloguePanel == nil {
+            cataloguePanel = EmoteCataloguePanel(
+                frameProvider: { [weak self] emote in
+                    guard let self = self, let clip = self.manifest.animations[emote.id] else { return [] }
+                    return clip.frames.compactMap { self.images[$0] }
+                },
+                onSelect: { [weak self] emote in
+                    self?.playEmote(emote)
+                }
+            )
+            cataloguePanel?.center()
+        }
+        cataloguePanel?.orderFrontRegardless()
+        cataloguePanel?.makeKey()
+        cataloguePanel?.focusSearch()
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     func move(to origin: NSPoint) {
         panel.setFrameOrigin(Placement.clamp(origin: origin, size: panel.frame.size,
                                             screens: NSScreen.screens.map(\.visibleFrame)))
@@ -260,6 +290,7 @@ final class PetController: NSObject {
         item(companion.sleeping ? "Wake Up" : "Sleep", action: #selector(toggleSleep), in: menu)
         item("Feed", action: #selector(feed), in: menu).isEnabled = !companion.sleeping && !companion.dragging
         item("Heart", action: #selector(heart), in: menu).isEnabled = !companion.sleeping && !companion.dragging
+        item("Emote Catalogue...", action: #selector(showEmoteCatalogue), in: menu).isEnabled = !companion.dragging
         let minutesLeft = Int((focus.remaining(now: Date()) / 60).rounded(.up))
         item(focus.isActive ? "Stop Focus · \(minutesLeft) min left" : "Start Focus (\(Int(Focus.length / 60)) min)",
              action: #selector(toggleFocus), in: menu)
@@ -292,6 +323,12 @@ final class PetController: NSObject {
     /// Exercises bundled images, rendering and panel construction without saving
     /// preferences or requiring global input permissions.
     func smokeCheck() throws {
+        for emote in EmoteCatalog.all {
+            guard manifest.animations[emote.id] != nil else {
+                throw NSError(domain: "MochiSmoke", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "Missing emote animation: \(emote.id)"])
+            }
+        }
         for clip in manifest.animations.values {
             for frame in clip.frames {
                 sprite.image = images[frame]
@@ -301,6 +338,60 @@ final class PetController: NSObject {
                 sprite.cacheDisplay(in: sprite.bounds, to: bitmap)
             }
         }
+        var selectedEmote: Emote?
+        let testPanel = EmoteCataloguePanel(
+            frameProvider: { [weak self] emote in
+                guard let self = self, let clip = self.manifest.animations[emote.id] else { return [] }
+                return clip.frames.compactMap { self.images[$0] }
+            },
+            onSelect: { emote in
+                selectedEmote = emote
+            }
+        )
+        guard testPanel.gridView.cardViews.count == EmoteCatalog.all.count else {
+            throw NSError(domain: "MochiSmoke", code: 3, userInfo: [NSLocalizedDescriptionKey: "Expected all emotes in catalogue panel"])
+        }
+        guard testPanel.gridView.emptyLabel.isHidden else {
+            throw NSError(domain: "MochiSmoke", code: 4, userInfo: [NSLocalizedDescriptionKey: "Empty label should be hidden initially"])
+        }
+        // Test query filtering
+        testPanel.searchField.stringValue = "coffee"
+        testPanel.reloadGrid()
+        guard testPanel.gridView.cardViews.count == 1, testPanel.gridView.cardViews.first?.emote.id == "coffee" else {
+            throw NSError(domain: "MochiSmoke", code: 5, userInfo: [NSLocalizedDescriptionKey: "Search query filtering failed"])
+        }
+        // Test empty state
+        testPanel.searchField.stringValue = "xyz_nonexistent_emote"
+        testPanel.reloadGrid()
+        guard testPanel.gridView.cardViews.isEmpty, !testPanel.gridView.emptyLabel.isHidden else {
+            throw NSError(domain: "MochiSmoke", code: 6, userInfo: [NSLocalizedDescriptionKey: "Empty state failed"])
+        }
+        // Test category filtering
+        testPanel.searchField.stringValue = ""
+        testPanel.segmentedControl.selectedSegment = 2 // Work
+        testPanel.reloadGrid()
+        let expectedWorkCount = EmoteCatalog.search(query: "", category: .work).count
+        guard testPanel.gridView.cardViews.count == expectedWorkCount else {
+            throw NSError(domain: "MochiSmoke", code: 7, userInfo: [NSLocalizedDescriptionKey: "Category filtering failed"])
+        }
+        // Test selection callback
+        testPanel.gridView.cardViews.first?.onSelect(testPanel.gridView.cardViews.first!.emote)
+        guard selectedEmote != nil else {
+            throw NSError(domain: "MochiSmoke", code: 8, userInfo: [NSLocalizedDescriptionKey: "Emote card selection failed"])
+        }
+        // Test pet playEmote and tick duration expiration
+        let testEmote = EmoteCatalog.all[0]
+        playEmote(testEmote)
+        guard companion.animation == testEmote.id, companion.activeEmote == testEmote else {
+            throw NSError(domain: "MochiSmoke", code: 9, userInfo: [NSLocalizedDescriptionKey: "playEmote did not set animation"])
+        }
+        let now = ProcessInfo.processInfo.systemUptime + testEmote.playbackDuration + 1
+        companion.tick(now: now, elapsed: 0.1)
+        guard companion.animation == "idle", companion.activeEmote == nil else {
+            throw NSError(domain: "MochiSmoke", code: 10, userInfo: [NSLocalizedDescriptionKey: "companion.tick did not expire emote"])
+        }
+        testPanel.orderFrontRegardless()
+        testPanel.close()
         print("Mochi smoke check passed: \(images.count) sprites, \(manifest.animations.count) animations, native panel rendered.")
     }
 }

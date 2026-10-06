@@ -32,10 +32,11 @@ This is an unofficial native macOS port of [miflow13/mochi-desktop](https://gith
 
 - **Presence:** Mochi sits on your desktop, idles, blinks, looks around, sleeps, and wakes up.
 - **Interactivity:** Click for bounce or squish reactions, double-click for a heart emote, feed him snacks, or drag him anywhere.
+- **Emote Catalogue:** Browse 20+ expressive animations in a dedicated floating panel. Search by keyword, filter by category (*Reactions*, *Work*, *Moods*, *Playful*), preview animations on hover, and trigger any emote instantly on your desktop.
 - **Awareness:** Mochi notices when you switch between code editors, terminals, and browsers. After 5 minutes without keyboard, mouse, or scroll input, he dozes off and wakes when you return.
 - **Focus Sessions:** Start a 25-minute focus session from the menu. Mochi stays calm and quiet beside you, with a heart reward when your session finishes.
 - **Roaming:** Mochi occasionally takes a short walk along the bottom of your screen, pausing immediately if you type, click, drag, or start a focus session.
-- **Menu Bar Companion:** A 🌱 menu-bar icon lets you bring Mochi to your active screen or quit anytime.
+- **Menu Bar Companion:** A 🌱 menu-bar icon lets you open the Emote Catalogue, bring Mochi to your active screen, or quit anytime.
 
 ---
 
@@ -63,6 +64,15 @@ The right-click menu includes **Feed**. Mochi plays an authored eating animation
 
 Mochi notices when you switch to your code editor or terminal, and dozes off after 5 minutes of inactivity, waking up when you return.
 
+### Emote Catalogue & Extended Animations
+
+Open **Emote Catalogue...** from Mochi's context menu or the menu bar (`🌱`) to access 20+ expressive animations imported from upstream Mochi:
+
+- **Categories & Instant Search:** Filter by *All*, *Reactions*, *Work*, *Moods*, or *Playful*, or type in the search bar for live instant filtering (`table flip`, `coffee`, `typing`, `dance`, etc.).
+- **Live Hover Previews:** Hover your cursor over any emote card to preview the animation running in real time at full frame rate.
+- **Desktop Playback:** Click any card to trigger the emote directly on your desktop companion. Looping emotes return to idle after a few seconds, and any user interaction (click, drag, typing) interrupts the emote instantly.
+- **20 Authored Animations:** Includes `This Is Fine`, `Table Flip`, `Happy Dance`, `Party Time`, `Coffee Break`, `Fast Typing`, `Terminal`, `VS Code`, `Popcorn`, `Rage`, `Crying`, `Sparkle`, `Salute`, `Shrug`, `Headpat`, `Looking at Watch`, `Dizzy`, `Mind Blown`, `Celebration`, and `Friendly Wave`.
+
 ---
 
 ## Controls
@@ -72,9 +82,9 @@ Mochi notices when you switch to your code editor or terminal, and dozes off aft
 | **Left-click** | Bounce or squish reaction |
 | **Double-click** | Heart emote ❤️ |
 | **Drag & Drop** | Pick up and reposition Mochi anywhere |
-| **Right-click / Control-click** | Feed, heart, sleep/wake, change size (small / medium / large), toggle Awareness & Roaming |
+| **Right-click / Control-click** | Emote Catalogue..., Feed, heart, sleep/wake, change size (small / medium / large), toggle Awareness & Roaming |
 | **Click sleeping Mochi** | Wake him up |
-| **🌱 Menu bar icon** | Bring Mochi to current display, quit |
+| **🌱 Menu bar icon** | Emote Catalogue..., Bring Mochi to current display, quit |
 
 ---
 
@@ -129,10 +139,10 @@ Mochi is designed to be completely unobtrusive and private:
 Run the automated test suite and sprite smoke test:
 
 ```sh
-# Run 46 unit tests
+# Run 57 unit tests (companion, awareness, focus, roaming, emotes)
 swift test
 
-# Run sprite smoke test (verifies all 119 bundled animation frames in an offscreen panel)
+# Run sprite smoke test (verifies all 308 bundled animation frames across 35 animations in an offscreen panel)
 dist/Mochi.app/Contents/MacOS/MochiMac --smoke-test
 ```
 

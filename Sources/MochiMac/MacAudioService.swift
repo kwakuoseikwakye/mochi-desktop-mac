@@ -107,9 +107,11 @@ public final class MacAudioService: AudioPlaybackDelegate {
         guard let player = ambientPlayer, player.isPlaying else { return }
         fadeTimer?.invalidate()
         player.setVolume(0.0, fadeDuration: 0.3)
-        fadeTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { [weak self] _ in
+        let timer = Timer(timeInterval: 0.35, repeats: false) { [weak self] _ in
             self?.ambientPlayer?.stop()
             self?.ambientPlayer = nil
         }
+        RunLoop.main.add(timer, forMode: .common)
+        self.fadeTimer = timer
     }
 }

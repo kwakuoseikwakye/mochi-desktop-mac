@@ -31,6 +31,12 @@ final class SoundTests: XCTestCase {
 
         settings.setVolume(-0.2)
         XCTAssertEqual(settings.volume, 0.0, accuracy: 0.001)
+
+        settings.volume = 1.6
+        XCTAssertEqual(settings.volume, 1.0, accuracy: 0.001)
+
+        settings.volume = -0.5
+        XCTAssertEqual(settings.volume, 0.0, accuracy: 0.001)
     }
 
     func testMutedSoundManagerDispatchesNothing() {
@@ -89,5 +95,20 @@ final class SoundTests: XCTestCase {
 
         manager.startFocusAmbience()
         XCTAssertEqual(delegate.ambientLoopsStarted.count, 1)
+    }
+
+    func testMuteTransitionStopsAmbientLoop() {
+        let delegate = MockAudioDelegate()
+        let settings = SoundSettings(isMuted: false, volume: 0.8, isFocusRainEnabled: true)
+        let manager = SoundManager(settings: settings, delegate: delegate)
+
+        manager.startFocusAmbience()
+        XCTAssertEqual(delegate.ambientLoopsStarted.count, 1)
+
+        var mutedSettings = settings
+        mutedSettings.isMuted = true
+        manager.updateSettings(mutedSettings)
+
+        XCTAssertEqual(delegate.ambientLoopsStoppedCount, 1)
     }
 }

@@ -27,7 +27,12 @@ public enum SoundEvent: String, CaseIterable, Equatable {
 
 public struct SoundSettings: Equatable {
     public var isMuted: Bool
-    public var volume: Double
+    public var volume: Double {
+        didSet {
+            let clamped = max(0.0, min(1.0, volume))
+            if volume != clamped { volume = clamped }
+        }
+    }
     public var isFocusRainEnabled: Bool
 
     public static let defaultVolume: Double = 0.5

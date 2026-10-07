@@ -328,6 +328,9 @@ final class PetController: NSObject, NSMenuDelegate {
         settings.setVolume(newVolume)
         soundManager.updateSettings(settings)
         saveSoundSettings()
+        if focus.isActive && soundManager.settings.isFocusRainEnabled && !soundManager.settings.isMuted {
+            soundManager.startFocusAmbience()
+        }
     }
 
     @objc func selectVolume(_ sender: NSMenuItem) {

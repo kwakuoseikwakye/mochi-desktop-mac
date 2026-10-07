@@ -32,6 +32,7 @@ This is an unofficial native macOS port of [miflow13/mochi-desktop](https://gith
 
 - **Presence:** Mochi sits on your desktop, idles, blinks, looks around, sleeps, and wakes up.
 - **Interactivity:** Click for bounce or squish reactions, double-click for a heart emote, feed him snacks, or drag him anywhere.
+- **Sound Effects & Rain Ambience:** Native audio cues for interactions (chirp, eat, spawn, exit, menu open, level-up) and an ambient looping rain sound during focus sessions. Fully toggleable with volume presets (muted by default).
 - **Emote Catalogue:** Browse 20+ expressive animations in a dedicated floating panel. Search by keyword, filter by category (*Reactions*, *Work*, *Moods*, *Playful*), preview animations on hover, and trigger any emote instantly on your desktop.
 - **Awareness:** Mochi notices when you switch between code editors, terminals, and browsers. After 5 minutes without keyboard, mouse, or scroll input, he dozes off and wakes when you return.
 - **Focus Sessions:** Start a 25-minute focus session from the menu. Mochi stays calm and quiet beside you, with a heart reward when your session finishes.
@@ -82,7 +83,7 @@ Open **Emote Catalogue...** from Mochi's context menu or the menu bar (`🌱`) t
 | **Left-click** | Bounce or squish reaction |
 | **Double-click** | Heart emote ❤️ |
 | **Drag & Drop** | Pick up and reposition Mochi anywhere |
-| **Right-click / Control-click** | Emote Catalogue..., Feed, heart, sleep/wake, change size (small / medium / large), toggle Awareness & Roaming |
+| **Right-click / Control-click** | Emote Catalogue..., Feed, heart, sleep/wake, change size (small / medium / large), sound effects toggle, volume presets, focus rain toggle, toggle Awareness & Roaming |
 | **Click sleeping Mochi** | Wake him up |
 | **🌱 Menu bar icon** | Emote Catalogue..., Bring Mochi to current display, quit |
 
@@ -136,13 +137,13 @@ Mochi is designed to be completely unobtrusive and private:
 
 ## Testing & Verification
 
-Run the automated test suite and sprite smoke test:
+Run the automated test suite and smoke test:
 
 ```sh
-# Run 57 unit tests (companion, awareness, focus, roaming, emotes)
+# Run 61 unit tests (companion, awareness, focus, roaming, emotes, sound)
 swift test
 
-# Run sprite smoke test (verifies all 308 bundled animation frames across 35 animations in an offscreen panel)
+# Run smoke test (verifies all 308 bundled animation frames across 35 animations and 7 audio assets in an offscreen panel)
 dist/Mochi.app/Contents/MacOS/MochiMac --smoke-test
 ```
 

@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import MochiCore
 
 final class PetPanel: NSPanel {
@@ -51,8 +52,9 @@ final class SpriteView: NSView {
     }
 }
 
-final class PetController: NSObject {
+final class PetController: NSObject, NSMenuDelegate {
     let panel: PetPanel
+    let soundManager: SoundManager
     private let sprite = SpriteView()
     private let manifest: Manifest
     private var images: [String: NSImage] = [:]
@@ -69,6 +71,7 @@ final class PetController: NSObject {
     /// back each tick loses the fraction and makes walks speed up leftward and slow down rightward.
     private var roamX: Double?
     private var renderedFrame: String?
+    private var lastEatFrame: Int = -1
     private let defaults: UserDefaults
     private let persistPreferences: Bool
     private var size: CGFloat
@@ -76,6 +79,11 @@ final class PetController: NSObject {
     init(defaults: UserDefaults = .standard, persistPreferences: Bool = true) throws {
         self.defaults = defaults
         self.persistPreferences = persistPreferences
+        let isMuted = defaults.object(forKey: "soundMuted") != nil ? defaults.bool(forKey: "soundMuted") : true
+        let volume = defaults.object(forKey: "soundVolume") != nil ? defaults.double(forKey: "soundVolume") : 0.5
+        let focusRain = defaults.bool(forKey: "soundFocusRain")
+        let soundSettings = SoundSettings(isMuted: isMuted, volume: volume, isFocusRainEnabled: focusRain)
+        soundManager = SoundManager(settings: soundSettings, delegate: MacAudioService.shared)
         let resources = Bundle.module.resourceURL!.appendingPathComponent("Resources")
         let root = resources.appendingPathComponent("Sprites")
         manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: root.appendingPathComponent("manifest.json"))).validated()
@@ -117,6 +125,9 @@ final class PetController: NSObject {
         roaming.enabled = !defaults.bool(forKey: "roamingOff")
         let savedEnd = defaults.double(forKey: "focusEndsAt")
         focus.restore(endsAt: savedEnd > 0 ? Date(timeIntervalSince1970: savedEnd) : nil, now: Date())
+        if focus.isActive {
+            soundManager.startFocusAmbience()
+        }
         render()
         panel.orderFrontRegardless()
         NotificationCenter.default.addObserver(self, selector: #selector(screensChanged),
@@ -127,6 +138,7 @@ final class PetController: NSObject {
     }
 
     func shutdown() {
+        soundManager.stopFocusAmbience()
         timer?.invalidate()
         timer = nil
         NotificationCenter.default.removeObserver(self)
@@ -142,13 +154,26 @@ final class PetController: NSObject {
         let delta = min(max(now - previousTick, 0), 0.25)
         previousTick = now
         companion.tick(now: now, elapsed: delta)
+        if companion.animation == "eat" {
+            if companion.frameIndex >= 2 && lastEatFrame < 2 {
+                soundManager.trigger(.eat)
+            }
+            lastEatFrame = companion.frameIndex
+        } else {
+            lastEatFrame = -1
+        }
         if now >= nextAmbient {
             if companion.animation == "idle", !focus.isActive { companion.react(Bool.random() ? "blink" : "look") }
             nextAmbient = now + Double.random(in: 5...12)
         }
         if now >= nextSense {
             nextSense = now + 0.5
-            if focus.update(now: Date()) { companion.react("heart"); save() }
+            if focus.update(now: Date()) {
+                companion.react("heart")
+                soundManager.stopFocusAmbience()
+                soundManager.trigger(.levelUp)
+                save()
+            }
             sense()
         }
         roam(delta: delta)
@@ -206,7 +231,13 @@ final class PetController: NSObject {
 
     func click(count: Int) {
         if companion.sleeping { companion.toggleSleep(); save() }
-        else { companion.react(count >= 2 ? "heart" : Bool.random() ? "bounce" : "squish") }
+        else {
+            let reaction = count >= 2 ? "heart" : Bool.random() ? "bounce" : "squish"
+            companion.react(reaction)
+            if reaction == "bounce" || reaction == "squish" {
+                soundManager.trigger(.chirp)
+            }
+        }
         render()
     }
 
@@ -244,6 +275,13 @@ final class PetController: NSObject {
                                             screens: NSScreen.screens.map(\.visibleFrame)))
     }
 
+    func saveSoundSettings() {
+        guard persistPreferences else { return }
+        defaults.set(soundManager.settings.isMuted, forKey: "soundMuted")
+        defaults.set(soundManager.settings.volume, forKey: "soundVolume")
+        defaults.set(soundManager.settings.isFocusRainEnabled, forKey: "soundFocusRain")
+    }
+
     private func save() {
         guard persistPreferences else { return }
         defaults.set(panel.frame.minX, forKey: "petX")
@@ -254,6 +292,7 @@ final class PetController: NSObject {
         defaults.set(!roaming.enabled, forKey: "roamingOff")
         if let end = focus.endsAt { defaults.set(end.timeIntervalSince1970, forKey: "focusEndsAt") }
         else { defaults.removeObject(forKey: "focusEndsAt") }
+        saveSoundSettings()
     }
 
     @objc private func screensChanged() { move(to: panel.frame.origin); save() }
@@ -262,10 +301,72 @@ final class PetController: NSObject {
     @objc private func heart() { companion.react("heart"); render() }
     @objc private func toggleAwareness() { awareness.enabled.toggle(); save() }
     @objc private func toggleRoaming() { roaming.enabled.toggle(); save() }
-    @objc private func toggleFocus() {
-        if focus.isActive { focus.stop() } else { focus.start(now: Date()) }
+
+    func startFocusSession() {
+        focus.start(now: Date())
+        soundManager.startFocusAmbience()
         save()
     }
+
+    func endFocusSession() {
+        focus.stop()
+        soundManager.stopFocusAmbience()
+        soundManager.trigger(.levelUp)
+        save()
+    }
+
+    func cancelFocusSession() {
+        endFocusSession()
+    }
+
+    @objc private func toggleFocus() {
+        if focus.isActive { endFocusSession() } else { startFocusSession() }
+    }
+
+    func setVolume(_ newVolume: Double) {
+        var settings = soundManager.settings
+        settings.setVolume(newVolume)
+        soundManager.updateSettings(settings)
+        saveSoundSettings()
+    }
+
+    @objc func selectVolume(_ sender: NSMenuItem) {
+        let percent = sender.tag > 0 ? sender.tag : 50
+        setVolume(Double(percent) / 100.0)
+    }
+
+    @objc func selectVolume() {
+        setVolume(0.5)
+    }
+
+    @objc func toggleSoundMuted() {
+        var settings = soundManager.settings
+        settings.isMuted.toggle()
+        soundManager.updateSettings(settings)
+        saveSoundSettings()
+        if !settings.isMuted && focus.isActive && settings.isFocusRainEnabled {
+            soundManager.startFocusAmbience()
+        }
+    }
+
+    @objc func toggleFocusRain() {
+        var settings = soundManager.settings
+        settings.isFocusRainEnabled.toggle()
+        soundManager.updateSettings(settings)
+        saveSoundSettings()
+        if focus.isActive {
+            if settings.isFocusRainEnabled {
+                soundManager.startFocusAmbience()
+            } else {
+                soundManager.stopFocusAmbience()
+            }
+        }
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        soundManager.trigger(.menuOpen)
+    }
+
     @objc private func resize(_ sender: NSMenuItem) {
         size = CGFloat(sender.tag)
         panel.setContentSize(NSSize(width: size, height: size))
@@ -282,6 +383,7 @@ final class PetController: NSObject {
     func makeMenu() -> NSMenu {
         let menu = NSMenu(title: "Mochi")
         menu.autoenablesItems = false
+        menu.delegate = self
         let title = NSMenuItem(title: "Mochi · Mac preview", action: nil, keyEquivalent: "")
         title.isEnabled = false
         menu.addItem(title)
@@ -306,6 +408,26 @@ final class PetController: NSObject {
         let sizeItem = NSMenuItem(title: "Size", action: nil, keyEquivalent: "")
         sizeItem.submenu = sizes
         menu.addItem(sizeItem)
+        menu.addItem(.separator())
+        let soundTitle = soundManager.settings.isMuted ? "Sound Effects: Off" : "Sound Effects: On"
+        let soundItem = item(soundTitle, action: #selector(toggleSoundMuted), in: menu)
+        soundItem.state = soundManager.settings.isMuted ? .off : .on
+
+        let volumes = NSMenu(title: "Volume")
+        volumes.autoenablesItems = false
+        for (name, percent) in [("25%", 25), ("50%", 50), ("75%", 75), ("100%", 100)] {
+            let entry = item(name, action: #selector(selectVolume(_:)), in: volumes)
+            entry.tag = percent
+            let targetVol = Double(percent) / 100.0
+            entry.state = abs(soundManager.settings.volume - targetVol) < 0.01 ? .on : .off
+        }
+        let volumeItem = NSMenuItem(title: "Volume", action: nil, keyEquivalent: "")
+        volumeItem.submenu = volumes
+        menu.addItem(volumeItem)
+
+        let rainTitle = soundManager.settings.isFocusRainEnabled ? "Focus Rain Ambience: On" : "Focus Rain Ambience: Off"
+        let rainItem = item(rainTitle, action: #selector(toggleFocusRain), in: menu)
+        rainItem.state = soundManager.settings.isFocusRainEnabled ? .on : .off
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit Mochi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.target = NSApp
@@ -392,7 +514,82 @@ final class PetController: NSObject {
         }
         testPanel.orderFrontRegardless()
         testPanel.close()
-        print("Mochi smoke check passed: \(images.count) sprites, \(manifest.animations.count) animations, native panel rendered.")
+
+        // Test sound settings defaults and controls
+        guard soundManager.settings.isMuted == true else {
+            throw NSError(domain: "MochiSmoke", code: 11, userInfo: [NSLocalizedDescriptionKey: "Default isMuted should be true"])
+        }
+        guard abs(soundManager.settings.volume - 0.5) < 0.001 else {
+            throw NSError(domain: "MochiSmoke", code: 12, userInfo: [NSLocalizedDescriptionKey: "Default volume should be 0.5"])
+        }
+        guard soundManager.settings.isFocusRainEnabled == false else {
+            throw NSError(domain: "MochiSmoke", code: 13, userInfo: [NSLocalizedDescriptionKey: "Default isFocusRainEnabled should be false"])
+        }
+        toggleSoundMuted()
+        guard soundManager.settings.isMuted == false else {
+            throw NSError(domain: "MochiSmoke", code: 14, userInfo: [NSLocalizedDescriptionKey: "toggleSoundMuted failed"])
+        }
+        let testVolumeItem = NSMenuItem(title: "75%", action: #selector(selectVolume(_:)), keyEquivalent: "")
+        testVolumeItem.tag = 75
+        selectVolume(testVolumeItem)
+        guard abs(soundManager.settings.volume - 0.75) < 0.001 else {
+            throw NSError(domain: "MochiSmoke", code: 15, userInfo: [NSLocalizedDescriptionKey: "selectVolume failed"])
+        }
+        toggleFocusRain()
+        guard soundManager.settings.isFocusRainEnabled == true else {
+            throw NSError(domain: "MochiSmoke", code: 16, userInfo: [NSLocalizedDescriptionKey: "toggleFocusRain failed"])
+        }
+        let smokeMenu = makeMenu()
+        guard smokeMenu.items.contains(where: { $0.title.contains("Sound Effects") }),
+              smokeMenu.items.contains(where: { $0.title == "Volume" }),
+              smokeMenu.items.contains(where: { $0.title.contains("Focus Rain Ambience") }) else {
+            throw NSError(domain: "MochiSmoke", code: 17, userInfo: [NSLocalizedDescriptionKey: "Menu missing sound controls"])
+        }
+        // Test focus session start and end
+        startFocusSession()
+        guard focus.isActive else {
+            throw NSError(domain: "MochiSmoke", code: 18, userInfo: [NSLocalizedDescriptionKey: "startFocusSession failed"])
+        }
+        endFocusSession()
+        guard !focus.isActive else {
+            throw NSError(domain: "MochiSmoke", code: 19, userInfo: [NSLocalizedDescriptionKey: "endFocusSession failed"])
+        }
+        // Test click chirp
+        click(count: 1)
+        // Test menu open trigger
+        menuWillOpen(smokeMenu)
+        // Restore muted
+        toggleSoundMuted()
+        toggleFocusRain()
+
+        // Verify audio assets in Resources/Audio
+        let resources = Bundle.module.resourceURL?.appendingPathComponent("Resources")
+        var audioDir = resources?.appendingPathComponent("Audio")
+        if let dir = audioDir, !FileManager.default.fileExists(atPath: dir.path) {
+            if FileManager.default.fileExists(atPath: "macos/Sources/MochiMac/Resources/Audio") {
+                audioDir = URL(fileURLWithPath: "macos/Sources/MochiMac/Resources/Audio")
+            } else if FileManager.default.fileExists(atPath: "Sources/MochiMac/Resources/Audio") {
+                audioDir = URL(fileURLWithPath: "Sources/MochiMac/Resources/Audio")
+            }
+        }
+        guard let validAudioDir = audioDir, FileManager.default.fileExists(atPath: validAudioDir.path) else {
+            throw NSError(domain: "MochiSmoke", code: 20, userInfo: [NSLocalizedDescriptionKey: "Resources/Audio directory missing"])
+        }
+        let expectedAudioFiles = ["chirp.wav", "eat.wav", "spawn.wav", "exit.wav", "menu_open.wav", "level_up.wav", "rain.wav"]
+        for filename in expectedAudioFiles {
+            let fileURL = validAudioDir.appendingPathComponent(filename)
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                throw NSError(domain: "MochiSmoke", code: 21, userInfo: [NSLocalizedDescriptionKey: "Missing audio asset: \(filename)"])
+            }
+            let player = try AVAudioPlayer(contentsOf: fileURL)
+            guard player.duration > 0.0 else {
+                throw NSError(domain: "MochiSmoke", code: 22, userInfo: [NSLocalizedDescriptionKey: "Audio asset \(filename) duration <= 0: \(player.duration)"])
+            }
+        }
+
+        print("[Smoke Test] Verified \(images.count) sprites across \(manifest.animations.count) animations.")
+        print("[Smoke Test] Verified \(expectedAudioFiles.count) audio assets with valid durations.")
+        print("[Smoke Test] PASSED")
     }
 }
 
@@ -410,6 +607,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 NSApp.terminate(nil)
                 return
             }
+            pet?.soundManager.trigger(.spawn)
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             item.button?.title = "🌱"
             item.button?.toolTip = "Mochi desktop companion"
@@ -432,6 +630,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    func menuWillOpen(_ menu: NSMenu) {
+        pet?.soundManager.trigger(.menuOpen)
+    }
+
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
         guard let source = pet?.makeMenu() else { return }
@@ -439,6 +641,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        pet?.soundManager.trigger(.exit)
         pet?.shutdown()
         if let statusItem { NSStatusBar.system.removeStatusItem(statusItem) }
     }

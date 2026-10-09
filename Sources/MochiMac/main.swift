@@ -198,10 +198,13 @@ final class PetController: NSObject, NSMenuDelegate {
         if now >= nextSense {
             nextSense = now + 0.5
             if focus.update(now: Date()) {
-                companion.react("heart")
                 soundManager.stopFocusAmbience()
-                soundManager.trigger(.levelUp)
+                let prevLevel = bondManager.state.level
                 bondManager.recordFocusCompleted(at: Date())
+                if bondManager.state.level == prevLevel {
+                    companion.react("heart")
+                    soundManager.trigger(.levelUp)
+                }
                 save()
             }
             sense()

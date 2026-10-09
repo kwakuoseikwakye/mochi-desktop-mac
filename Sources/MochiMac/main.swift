@@ -55,6 +55,9 @@ final class SpriteView: NSView {
 final class PetController: NSObject, NSMenuDelegate {
     let panel: PetPanel
     let soundManager: SoundManager
+    private let bondManager: BondManager
+    private var levelUpBanner: LevelUpBannerPanel?
+    private var accumulatedTypingSeconds: Double = 0
     private let sprite = SpriteView()
     private let manifest: Manifest
     private var images: [String: NSImage] = [:]
@@ -84,6 +87,19 @@ final class PetController: NSObject, NSMenuDelegate {
         let focusRain = defaults.bool(forKey: "soundFocusRain")
         let soundSettings = SoundSettings(isMuted: isMuted, volume: volume, isFocusRainEnabled: focusRain)
         soundManager = SoundManager(settings: soundSettings, delegate: MacAudioService.shared)
+        
+        let storedBondLevel = defaults.integer(forKey: "bondLevel")
+        let storedBondXP = defaults.integer(forKey: "bondCurrentXP")
+        let storedDailyXP = defaults.integer(forKey: "bondDailyEarnedXP")
+        let storedLastDate = defaults.string(forKey: "bondLastActiveDate") ?? ""
+        let initialBondState = BondState(
+            level: max(1, storedBondLevel),
+            currentXP: max(0, storedBondXP),
+            dailyEarnedXP: max(0, storedDailyXP),
+            lastActiveDate: storedLastDate
+        )
+        self.bondManager = BondManager(state: initialBondState)
+
         let resources = Bundle.module.resourceURL!.appendingPathComponent("Resources")
         let root = resources.appendingPathComponent("Sprites")
         manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: root.appendingPathComponent("manifest.json"))).validated()
@@ -102,6 +118,9 @@ final class PetController: NSObject, NSMenuDelegate {
         panel = PetPanel(contentRect: NSRect(x: 0, y: 0, width: size, height: size),
                          styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         super.init()
+        self.bondManager.onLevelUp = { [weak self] level, phase in
+            self?.celebrateLevelUp(level: level, phase: phase)
+        }
         panel.title = "Mochi"
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -148,6 +167,16 @@ final class PetController: NSObject, NSMenuDelegate {
         panel.close()
     }
 
+    private func celebrateLevelUp(level: Int, phase: BondPhase) {
+        companion.react("sparkle")
+        soundManager.trigger(.levelUp)
+        if levelUpBanner == nil {
+            levelUpBanner = LevelUpBannerPanel()
+        }
+        levelUpBanner?.show(level: level, phase: phase, above: panel.frame)
+        save()
+    }
+
     private func tick() {
         let now = ProcessInfo.processInfo.systemUptime
         // Avoid replaying minutes of animation after system sleep or a blocked menu.
@@ -172,6 +201,7 @@ final class PetController: NSObject, NSMenuDelegate {
                 companion.react("heart")
                 soundManager.stopFocusAmbience()
                 soundManager.trigger(.levelUp)
+                bondManager.recordFocusCompleted(at: Date())
                 save()
             }
             sense()
@@ -217,6 +247,14 @@ final class PetController: NSObject, NSMenuDelegate {
         case .react(let name): if !focus.isActive { companion.react(name) }
         case .doze, .wake: companion.toggleSleep()
         case nil: break
+        }
+        
+        if awareness.activity == .typing {
+            accumulatedTypingSeconds += 0.5
+            if accumulatedTypingSeconds >= 1.0 {
+                bondManager.recordTyping(seconds: accumulatedTypingSeconds, at: Date())
+                accumulatedTypingSeconds = 0
+            }
         }
     }
 
@@ -292,12 +330,21 @@ final class PetController: NSObject, NSMenuDelegate {
         defaults.set(!roaming.enabled, forKey: "roamingOff")
         if let end = focus.endsAt { defaults.set(end.timeIntervalSince1970, forKey: "focusEndsAt") }
         else { defaults.removeObject(forKey: "focusEndsAt") }
+        defaults.set(bondManager.state.level, forKey: "bondLevel")
+        defaults.set(bondManager.state.currentXP, forKey: "bondCurrentXP")
+        defaults.set(bondManager.state.dailyEarnedXP, forKey: "bondDailyEarnedXP")
+        defaults.set(bondManager.state.lastActiveDate, forKey: "bondLastActiveDate")
         saveSoundSettings()
     }
 
     @objc private func screensChanged() { move(to: panel.frame.origin); save() }
     @objc private func toggleSleep() { companion.toggleSleep(); save(); render() }
-    @objc private func feed() { companion.react("eat"); render() }
+    @objc private func feed() { 
+        companion.react("eat")
+        render()
+        bondManager.recordFeeding(at: Date())
+        save()
+    }
     @objc private func heart() { companion.react("heart"); render() }
     @objc private func toggleAwareness() { awareness.enabled.toggle(); save() }
     @objc private func toggleRoaming() { roaming.enabled.toggle(); save() }
@@ -390,6 +437,13 @@ final class PetController: NSObject, NSMenuDelegate {
         let title = NSMenuItem(title: "Mochi · Mac preview", action: nil, keyEquivalent: "")
         title.isEnabled = false
         menu.addItem(title)
+        
+        let bond = bondManager.state
+        let bondTitle = "🌱 Level \(bond.level) · \(bond.phase.displayName) (\(bond.currentXP)/\(bond.xpNeededForNextLevel) XP)"
+        let bondItem = NSMenuItem(title: bondTitle, action: nil, keyEquivalent: "")
+        bondItem.isEnabled = false
+        menu.addItem(bondItem)
+        
         menu.addItem(.separator())
         item("Show Mochi Here", action: #selector(bringBack), in: menu)
         item(companion.sleeping ? "Wake Up" : "Sleep", action: #selector(toggleSleep), in: menu)
@@ -432,10 +486,24 @@ final class PetController: NSObject, NSMenuDelegate {
         let rainItem = item(rainTitle, action: #selector(toggleFocusRain), in: menu)
         rainItem.state = soundManager.settings.isFocusRainEnabled ? .on : .off
         menu.addItem(.separator())
+        item("Reset Bond...", action: #selector(confirmResetBond), in: menu)
         let quit = NSMenuItem(title: "Quit Mochi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.target = NSApp
         menu.addItem(quit)
         return menu
+    }
+
+    @objc func confirmResetBond() {
+        let alert = NSAlert()
+        alert.messageText = "Reset Bond Progression?"
+        alert.informativeText = "This will return Mochi's relationship to Level 1 and 0 XP. This action cannot be undone."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Reset Bond")
+        if alert.runModal() == .alertSecondButtonReturn {
+            bondManager.reset()
+            save()
+        }
     }
 
     @discardableResult private func item(_ title: String, action: Selector, in menu: NSMenu) -> NSMenuItem {
@@ -606,6 +674,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pet = try PetController(defaults: smoke ? UserDefaults(suiteName: "MochiSmoke-\(UUID())")! : .standard,
                                     persistPreferences: !smoke)
             if smoke {
+                // Verify Bond Progression system
+                let testBond = BondManager(state: BondState(level: 1, currentXP: 0, dailyEarnedXP: 0, lastActiveDate: "2026-10-09"))
+                let earned = testBond.recordTyping(seconds: 500, at: Date())
+                guard earned == 480 || earned == 500 else {
+                    fputs("Smoke test failed: bond XP calculation unexpected\n", stderr)
+                    exit(1)
+                }
+                let bannerTest = LevelUpBannerPanel()
+                guard bannerTest.level == .floating else {
+                    fputs("Smoke test failed: LevelUpBannerPanel level is not floating\n", stderr)
+                    exit(1)
+                }
                 try pet?.smokeCheck()
                 NSApp.terminate(nil)
                 return

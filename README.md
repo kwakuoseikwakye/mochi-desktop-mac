@@ -33,11 +33,12 @@ This is an unofficial native macOS port of [miflow13/mochi-desktop](https://gith
 - **Presence:** Mochi sits on your desktop, idles, blinks, looks around, sleeps, and wakes up.
 - **Interactivity:** Click for bounce or squish reactions, double-click for a heart emote, feed him snacks, or drag him anywhere.
 - **Sound Effects & Rain Ambience:** Native audio cues for interactions (chirp, eat, spawn, exit, menu open, level-up) and an ambient looping rain sound during focus sessions. Fully toggleable with volume presets (muted by default).
+- **Bond Progression:** Form a deeper connection with Mochi over time across 5 progressive relationship phases (*New*, *Familiar*, *Comfortable*, *Close*, *Deep Bond*). Earn daily affection XP through typing awareness, feeding snacks, and completing 25-minute focus sessions. Celebrate each level-up with a floating celebratory banner!
 - **Emote Catalogue:** Browse 20+ expressive animations in a dedicated floating panel. Search by keyword, filter by category (*Reactions*, *Work*, *Moods*, *Playful*), preview animations on hover, and trigger any emote instantly on your desktop.
 - **Awareness:** Mochi notices when you switch between code editors, terminals, and browsers. After 5 minutes without keyboard, mouse, or scroll input, he dozes off and wakes when you return.
 - **Focus Sessions:** Start a 25-minute focus session from the menu. Mochi stays calm and quiet beside you, with a heart reward when your session finishes.
 - **Roaming:** Mochi occasionally takes a short walk along the bottom of your screen, pausing immediately if you type, click, drag, or start a focus session.
-- **Menu Bar Companion:** A 🌱 menu-bar icon lets you open the Emote Catalogue, bring Mochi to your active screen, or quit anytime.
+- **Menu Bar Companion:** A 🌱 menu-bar icon lets you view current Bond level & XP progress, open the Emote Catalogue, bring Mochi to your active screen, or quit anytime.
 
 ---
 
@@ -72,7 +73,14 @@ Open **Emote Catalogue...** from Mochi's context menu or the menu bar (`🌱`) t
 - **Categories & Instant Search:** Filter by *All*, *Reactions*, *Work*, *Moods*, or *Playful*, or type in the search bar for live instant filtering (`table flip`, `coffee`, `typing`, `dance`, etc.).
 - **Live Hover Previews:** Hover your cursor over any emote card to preview the animation running in real time at full frame rate.
 - **Desktop Playback:** Click any card to trigger the emote directly on your desktop companion. Looping emotes return to idle after a few seconds, and any user interaction (click, drag, typing) interrupts the emote instantly.
-- **20 Authored Animations:** Includes `This Is Fine`, `Table Flip`, `Happy Dance`, `Party Time`, `Coffee Break`, `Fast Typing`, `Terminal`, `VS Code`, `Popcorn`, `Rage`, `Crying`, `Sparkle`, `Salute`, `Shrug`, `Headpat`, `Looking at Watch`, `Dizzy`, `Mind Blown`, `Celebration`, and `Friendly Wave`.
+### Bond Progression & Celebrations
+
+Mochi remembers your daily time together and grows closer to you:
+- **5 Relationship Phases:** Progress through *New* (Lvl 1–2), *Familiar* (Lvl 3–4), *Comfortable* (Lvl 5–7), *Close* (Lvl 8–10), and *Deep Bond* (Lvl 11+).
+- **Affection XP:** Earn XP naturally as you work — +1 XP per second of active typing awareness, +25 XP per snack feed (up to 2 feeds per 10-minute window), and +150 XP for every completed 25-minute focus session.
+- **Daily Affection Cap:** Capped at 600 XP per calendar day to encourage healthy, sustainable work habits.
+- **Celebrations:** Leveling up triggers a celebratory chime sound effect and displays a floating pill banner (`🎉 Level N · [Phase]`) above Mochi.
+- **Live Progress & Reset:** See your current level, phase, and XP directly in the context menu and menu bar, with an option to reset anytime.
 
 ---
 
@@ -83,9 +91,9 @@ Open **Emote Catalogue...** from Mochi's context menu or the menu bar (`🌱`) t
 | **Left-click** | Bounce or squish reaction |
 | **Double-click** | Heart emote ❤️ |
 | **Drag & Drop** | Pick up and reposition Mochi anywhere |
-| **Right-click / Control-click** | Emote Catalogue..., Feed, heart, sleep/wake, change size (small / medium / large), sound effects toggle, volume presets, focus rain toggle, toggle Awareness & Roaming |
+| **Right-click / Control-click** | View Bond level & XP progress, Emote Catalogue..., Feed snack (+25 XP), heart, sleep/wake, change size (small / medium / large), sound effects toggle, volume presets, focus rain toggle, toggle Awareness & Roaming, Reset Bond... |
 | **Click sleeping Mochi** | Wake him up |
-| **🌱 Menu bar icon** | Emote Catalogue..., Bring Mochi to current display, quit |
+| **🌱 Menu bar icon** | View Bond level & XP progress, Emote Catalogue..., Bring Mochi to current display, Reset Bond..., quit |
 
 ---
 
@@ -140,10 +148,10 @@ Mochi is designed to be completely unobtrusive and private:
 Run the automated test suite and smoke test:
 
 ```sh
-# Run 61 unit tests (companion, awareness, focus, roaming, emotes, sound)
+# Run 68 unit tests (companion, awareness, focus, roaming, emotes, sound, bond progression)
 swift test
 
-# Run smoke test (verifies all 308 bundled animation frames across 35 animations and 7 audio assets in an offscreen panel)
+# Run smoke test (verifies 308 animation frames, 7 audio assets, Bond progression, and celebration banner in an offscreen panel)
 dist/Mochi.app/Contents/MacOS/MochiMac --smoke-test
 ```
 
